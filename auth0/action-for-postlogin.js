@@ -7,16 +7,23 @@ const axios = require("axios");
 * @param {PostLoginAPI} api - Interface whose methods can be used to change the behavior of the login.
 */
 exports.onExecutePostLogin = async (event, api) => {
-  if(event.user.app_metadata.userKey) return;
+
+  if(event.user.app_metadata.userKey) {
+    api.idToken.setCustomClaim("userKey", event.user.app_metadata.userKey);
+    return;
+  }
 
   // todo: Drits に user を登録する
 
-  const url = event.secrets.LAMBDA_ENDPOINT
+  const { LAMBDA_ENDPOINT: url } = event.secrets
   const response = await fetchUserKey(url, event.user.user_id);
 
-  console.log(response.data.userKey)
+  // todo: lambdaのレスポンスのハンドリング
+  const { userKey } = response.data;
+  api.user.setAppMetadata("userKey", userKey);
+  api.idToken.setCustomClaim("userKey", userKey);
 
-  api.user.setAppMetadata("userKey", response.data.userKey)
+  return
 };
 
 const fetchUserKey = async (url, user_id) => {
