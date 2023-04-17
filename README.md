@@ -1,8 +1,8 @@
 # Auth0
   ## 要件
-    ユーザー登録時、
-    ・Drits に user を登録する
-    ・登録された user の userKey を Auth0 の user_metadata に保存する
+    ユーザー登録時に以下の処理を行う
+    ・Drits に user を登録
+    ・登録された user の userKey を Auth0 の user_metadata に保存
       Auth0(Action) -> Lambda(function URLs) -> Drits Mgr API
 
   ## 詳細要件
@@ -21,6 +21,14 @@
   
   ## 環境変数
     Secretsに追加
+      - ACCESS_KEY_ID
+        アクセスキー
+      - SECRET_ACCESS_KEY
+        シークレット
+      - SERVICE
+        サービス名（lambda）
+      - REGION
+        リージョン
       - LAMBDA_ENDPOINT
         Lambda Function URLsのエンドポイント
 
