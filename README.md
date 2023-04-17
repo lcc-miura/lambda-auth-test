@@ -20,14 +20,16 @@
       どちらも対応可能（判定が必要）　←　採用
   
   ## 環境変数
-    Secrets
-      ・LAMBDA_ENDPOINT
+    Secretsに追加
+      - LAMBDA_ENDPOINT
         Lambda Function URLsのエンドポイント
 
-  ## 依存ライブラリ
-    Dependencies
-      インストールしたい外部モジュールの定義
-      ・axios
+  ## 依存ライブラリ（外部モジュール）
+    Dependenciesに追加
+      - @aws-sdk/protocol-http
+      - @aws-sdk/signature-v4
+      - @aws-crypto/sha256-universal
+      - axios
 
   ## 機能拡張
     Extensions
@@ -35,7 +37,10 @@
         リアルタイムデバック用
 
   ## 検証済み
-    クライアントにはReactを使用
+    クライアントにはReactとNext.jsを使用
+
+  ## 懸念
+    エラーが出てもログに残らない？
 
 ***
 
@@ -57,6 +62,3 @@
 
   ## ランタイム
     Node.js 16
-
-
-

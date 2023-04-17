@@ -1,3 +1,6 @@
+const { HttpRequest } = require('@aws-sdk/protocol-http');
+const { SignatureV4 } = require('@aws-sdk/signature-v4');
+const { Sha256 } = require('@aws-crypto/sha256-universal');
 const axios = require("axios");
 
 /**
@@ -8,34 +11,57 @@ const axios = require("axios");
 */
 exports.onExecutePostLogin = async (event, api) => {
 
+  const USER_KEY = "userKey";
+
   if(event.user.app_metadata.userKey) {
-    api.idToken.setCustomClaim("userKey", event.user.app_metadata.userKey);
+    api.idToken.setCustomClaim(USER_KEY, event.user.app_metadata.userKey);
     return;
   }
 
   // todo: Drits に user を登録する
 
-  const { LAMBDA_ENDPOINT: url } = event.secrets
-  const response = await fetchUserKey(url, event.user.user_id);
+  const { LAMBDA_URL, ACCESS_KEY_ID, SECRET_ACCESS_KEY, SERVICE, REGION } = event.secrets;
+  const { user_id } = event.user;
+  const signatureV4 = generateSignatureV4(SERVICE, REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, Sha256);
+  const httpRequest = generateHttpRequest(new URL(LAMBDA_URL), user_id);
+  const signedRequest = await signatureV4.sign(httpRequest);
 
-  // todo: lambdaのレスポンスのハンドリング
+  const response = await axios.get(LAMBDA_URL, {
+    headers: signedRequest.headers,
+    params: { user_id }  
+  });
+    
   const { userKey } = response.data;
-  api.user.setAppMetadata("userKey", userKey);
-  api.idToken.setCustomClaim("userKey", userKey);
+  api.user.setAppMetadata(USER_KEY, userKey);
+  api.idToken.setCustomClaim(USER_KEY, userKey);
 
-  return
+  return;
 };
 
-const fetchUserKey = async (url, user_id) => {
-  return await axios.get(
-    url,
-    {
-      params: {
-        user_id
-      }
-    }
-  );
-}
+const generateSignatureV4 = (service, region, accessKeyId, secretAccessKey, Sha256) => {
+  return new SignatureV4({
+    service,
+    region,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+    sha256: Sha256,
+  });
+};
+
+const generateHttpRequest = (url, user_id) => {
+  return new HttpRequest({
+    method: 'GET',
+    hostname: url.hostname,
+    query: { user_id },
+    headers: {
+      'content-type': 'application/json',
+      host: url.hostname,
+    },
+    path: url.pathname,
+  });
+};
 
 
 /**
